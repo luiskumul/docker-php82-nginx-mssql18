@@ -1,0 +1,16 @@
+FROM alpine:3.18 as build
+# Setup document root
+WORKDIR /var/www/html
+
+# Install packages and remove default server definition
+RUN apk add --no-cache \
+  curl \
+  php82-openssl \
+  php82-pear \
+  php82-dev \
+  autoconf \
+  make \
+  g++ \
+  unixodbc-dev
+
+RUN pecl82 install sqlsrv && pecl82 install pdo_sqlsrv

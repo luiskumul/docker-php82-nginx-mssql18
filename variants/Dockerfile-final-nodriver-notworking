@@ -1,30 +1,9 @@
-FROM alpine:3.18 as build
+FROM alpine:3.18
 # Setup document root
 WORKDIR /var/www/html
 
 # Install packages and remove default server definition
 RUN apk add --no-cache \
-  curl \
-  php82-openssl \
-  php82-pear \
-  php82-dev \
-  autoconf \
-  make \
-  g++ \
-  unixodbc-dev
-
-RUN pecl82 install sqlsrv && pecl82 install pdo_sqlsrv
-
-
-# --------- Final stage ----------
-
-FROM alpine:3.18 as final
-# Setup document root
-WORKDIR /var/www/html
-
-# Install packages and remove default server definition
-RUN apk add --no-cache \
-  curl \
   nginx \
   php82 \
   php82-ctype \
@@ -44,14 +23,11 @@ RUN apk add --no-cache \
   php82-pdo \
   supervisor
 
-COPY --from=build /usr/lib/php82/modules/ /usr/lib/php82/modules/
+COPY --from=php82-nginx:mssql-18-rev2 /usr/lib/php82/modules/ /usr/lib/php82/modules/
 
 RUN chmod +x /usr/lib/php82/modules/ && \
   echo extension=pdo_sqlsrv.so >> /etc/php82/conf.d/10_pdo_sqlsrv.ini && \
   echo extension=sqlsrv.so >> /etc/php82/conf.d/20_sqlsrv.ini
-
-RUN curl -O https://download.microsoft.com/download/3/5/5/355d7943-a338-41a7-858d-53b259ea33f5/msodbcsql18_18.3.1.1-1_amd64.apk && \
-  apk add --allow-untrusted --no-cache msodbcsql18_18.3.1.1-1_amd64.apk
 
 # Configure nginx - http
 COPY config/nginx.conf /etc/nginx/nginx.conf
